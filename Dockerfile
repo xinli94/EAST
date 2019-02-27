@@ -34,4 +34,4 @@ RUN apt-get update && apt-get install build-essential software-properties-common
 
 # requirements
 RUN git clone --recursive https://github.com/xinli94/EAST.git
-RUN cd /workspace/EASTthe text area is too small or the text is hard to recognize; pip install -r requirements.txt
+RUN cd /workspace/EAST; git fetch --all && pip install -r requirements.txt

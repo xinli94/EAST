@@ -8,5 +8,5 @@ ipython==6.1.0
 Pillow==4.2.1
 pandas
 tqdm
-opencv-python==4.0.0
+opencv-python>=4.0.0
 tensorflow-gpu==1.12.0
