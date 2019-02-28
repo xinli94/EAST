@@ -174,8 +174,8 @@ def main(argv=None):
                     score_map_thresh=FLAGS.score_threshold
                 )
 
-                print('[{}/{} ({}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms'.format(
-                    idx+1, total, round(100.0 * (idx+1) / total, 2), im_fn, timer['net']*1000, timer['restore']*1000, timer['nms']*1000))
+                print('[{}/{} ({:.2f}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms'.format(
+                    idx+1, total, 100.0 * (idx+1) / total, im_fn, timer['net']*1000, timer['restore']*1000, timer['nms']*1000))
 
                 if boxes is not None:
                     boxes = boxes[:, :8].reshape((-1, 4, 2))
