@@ -107,7 +107,7 @@ def detect(score_map, geo_map, timer, score_map_thresh=0.8, box_thresh=0.1, nms_
     timer['nms'] = time.time() - start
 
     if boxes.shape[0] == 0:
-        return None, timer
+        return None, timer, None
 
     # here we filter some low score boxes by the average score map, this is different from the orginal paper
     for i, box in enumerate(boxes):
@@ -115,6 +115,7 @@ def detect(score_map, geo_map, timer, score_map_thresh=0.8, box_thresh=0.1, nms_
         cv2.fillPoly(mask, box[:8].reshape((-1, 4, 2)).astype(np.int32) // 4, 1)
         boxes[i, 8] = cv2.mean(score_map, mask)[0]
     boxes = boxes[boxes[:, 8] > box_thresh]
+    print('{} text boxes after nms'.format(boxes.shape[0]))
 
     return boxes, timer, scores_filtered
 
@@ -173,7 +174,7 @@ def main(argv=None):
                     score_map_thresh=FLAGS.score_threshold
                 )
 
-                print('[{} / {} ({}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms'.format(
+                print('[{}/{} ({}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms'.format(
                     idx+1, total, round(100.0 * (idx+1) / total, 2), im_fn, timer['net']*1000, timer['restore']*1000, timer['nms']*1000))
 
                 if boxes is not None:
@@ -201,7 +202,7 @@ def main(argv=None):
                                 box[0, 0], box[0, 1], box[1, 0], box[1, 1], box[2, 0], box[2, 1], box[3, 0], box[3, 1], cur_score
                             ))
                             if cur_score > FLAGS.vis_score_threshold:
-                                cv2.polylines(im[:, :, ::-1], [box.astype(np.int32).reshape((-1, 1, 2))], True, color=(255, 255, 0), thickness=1)
+                                cv2.polylines(im[:, :, ::-1], [box.astype(np.int32).reshape((-1, 1, 2))], True, color=(255, 0, 0), thickness=2)
                 if not FLAGS.no_write_images:
                     img_path = os.path.join(FLAGS.output_dir, os.path.basename(im_fn))
                     cv2.imwrite(img_path, im[:, :, ::-1])
