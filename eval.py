@@ -16,6 +16,7 @@ tf.app.flags.DEFINE_integer('write_images_count', 500, 'number of images to visu
 tf.app.flags.DEFINE_float('score_threshold', 0.8, 'score threshold to use')
 tf.app.flags.DEFINE_float('vis_score_threshold', 0.8, 'score threshold to use')
 tf.app.flags.DEFINE_string('backbone', 'resnet_v1_50', 'backbone model to use')
+tf.app.flags.DEFINE_boolean('vis_only', False, 'only visualize demo images')
 
 import model
 from icdar import restore_rectangle
@@ -110,7 +111,7 @@ def detect(score_map, geo_map, timer, score_map_thresh=0.8, box_thresh=0, nms_th
     if boxes.shape[0] == 0:
         return None, timer, None
 
-    # here we filter some low score boxes by the average score map, this is different from the orginal paper
+    # here we filter some low score boxes by the average score map, this is different from the original paper
     for i, box in enumerate(boxes):
         mask = np.zeros_like(score_map, dtype=np.uint8)
         cv2.fillPoly(mask, box[:8].reshape((-1, 4, 2)).astype(np.int32) // 4, 1)
@@ -133,7 +134,6 @@ def sort_poly(p):
 def main(argv=None):
     import os
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
-
 
     try:
         os.makedirs(FLAGS.output_dir)
@@ -210,6 +210,10 @@ def main(argv=None):
                     image_count += 1
                     img_path = os.path.join(FLAGS.output_dir, os.path.basename(im_fn))
                     cv2.imwrite(img_path, im[:, :, ::-1])
+                else:
+                    if FLAGS.vis_only:
+                        print('==> Visualization only')
+                        return
 
 if __name__ == '__main__':
     tf.app.run()

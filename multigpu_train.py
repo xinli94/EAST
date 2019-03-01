@@ -137,8 +137,11 @@ def main(argv=None):
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         if FLAGS.restore:
             print('continue training from previous checkpoint')
-            ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-            saver.restore(sess, ckpt)
+            try:
+                ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+                saver.restore(sess, ckpt)
+            except:
+                saver.restore(sess, FLAGS.checkpoint_path)
         else:
             sess.run(init)
             if FLAGS.pretrained_model_path is not None:

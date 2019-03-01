@@ -4,6 +4,7 @@ import csv
 import cv2
 import time
 import os
+import pandas as pd
 import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
@@ -34,10 +35,14 @@ FLAGS = tf.app.flags.FLAGS
 
 
 def get_images():
-    files = []
-    for ext in ['jpg', 'png', 'jpeg', 'JPG']:
-        files.extend(glob.glob(
-            os.path.join(FLAGS.training_data_path, '*.{}'.format(ext))))
+    if os.path.splitext(FLAGS.training_data_path)[-1] == '.csv':
+        # support csv format input
+        files = pd.read_csv(FLAGS.training_data_path, names=['image'])['image'].tolist()
+    else:
+        files = []
+        for ext in ['jpg', 'png', 'jpeg', 'JPG']:
+            files.extend(glob.glob(
+                os.path.join(FLAGS.training_data_path, '*.{}'.format(ext))))
     return files
 
 

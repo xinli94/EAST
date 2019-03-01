@@ -1,3 +1,4 @@
+# coding:utf-8
 import argparse
 import glob
 import numpy as np
@@ -32,7 +33,7 @@ args = parser.parse_args()
 
 def valid(box_file, text_file):
     error = []
-    for decode in ['acsii', 'utf-8', 'latin-1']:
+    for decode in ['ascii', 'utf-8', 'latin-1']:
         try:
             box_count = sum([1 for line in open(box_file, 'r', encoding=decode) if line.strip()])
             text_count = sum([1 for line in open(text_file, 'r', encoding=decode) if line.strip()])
@@ -46,9 +47,9 @@ def valid(box_file, text_file):
 
 def robust_decode(text_file):
     error = []
-    for decode in ['acsii', 'utf-8', 'latin-1']:
+    for decode in ['ascii', 'utf-8', 'latin-1']:
         try:
-            text = [item.strip() for item in open(text_path, 'r', encoding=decode).readlines()]
+            text = [item.strip().encode('utf-8') for item in open(text_file, 'r', encoding=decode).readlines()]
             return text
         except Exception as e:
             error.append(e)
@@ -108,15 +109,15 @@ def main():
         box_files = glob.glob(os.path.join(args.boxes_folder, '*.txt'))
         text_files = list(map(lambda x: x.replace('/boxes/', '/text/'), box_files))
 
-        for idx, (boxes_path, text_path) in enumerate(zip(box_files, text_files)):
-            if not valid(boxes_path, text_path):
-                print('==> Ignore {}'.format(boxes_path))
+        for idx, (box_file, text_file) in tqdm(enumerate(zip(box_files, text_files)), total=len(box_files)):
+            if not valid(box_file, text_file):
+                print('==> Ignore {}'.format(box_file))
                 continue
 
-            boxes = np.genfromtxt(boxes_path, delimiter=',').astype(np.float32)
-            text = robust_decode(text_path)
+            boxes = np.genfromtxt(box_file, delimiter=',').astype(np.float32)
+            text = robust_decode(text_file)
             if text == None:
-                print('==> Ignore {}'.format(boxes_path))
+                print('==> Ignore {}'.format(box_file))
                 continue
 
             records = []
@@ -124,7 +125,7 @@ def main():
                 # x1, y1, x2, y2, x3, y3, x4, y4, label
                 records.append(list(box) + [label])
 
-            output_file = boxes_path.replace('/boxes/', '/images/')
+            output_file = box_file.replace('/boxes/', '/images/')
             pd.DataFrame.from_records(records).to_csv(output_file, header=None, index=None)
 
 if __name__ == '__main__':
