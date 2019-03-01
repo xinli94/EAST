@@ -1,41 +1,35 @@
 import os
+import glob
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 import sys
 
-colors = ['red', 'green', 'orange', 'blue', 'black']
-colors = ['black','blue','green','orange', 'red','brown', 'purple']
+# colors = ['red', 'green', 'orange', 'blue', 'black']
+colors = iter(['black','blue','green','orange', 'red','brown', 'purple'])
 
-for i,d in enumerate(os.listdir(sys.argv[1])):
-    if not d.endswith('.roc'):
-        continue
-    # a = np.loadtxt(os.path.join(sys.argv[1],d),delimiter=',')
-    # plt.plot(a[:,1],a[:,2],label=d.split('.')[0], color=colors[i])
-    # #plt.plot(a[:,0],a[:,1],label=d.split('.')[0], color=colors[i])
+files = glob.glob(os.path.join(sys.argv[1], '*.roc'))
+# colors = iter(cm.rainbow(np.linspace(0,1,len(files)+1)))
+
+for i, path in enumerate(files):
+    d = os.path.basename(path)
+    label = os.path.splitext(d)[0]
 
     a = np.loadtxt(os.path.join(sys.argv[1],d),delimiter=',')
     threshold, recall, precision = a[:,0], a[:,1], a[:,2]
 
+    color = next(colors)
+
     plt.subplot(1,3,1)
-    plt.plot(threshold,precision,label=d.split('.')[0], color=colors[i])
+    plt.plot(threshold,precision,label=label, color=color)
 
     plt.subplot(1,3,2)
-    plt.plot(threshold,recall,label=d.split('.')[0], color=colors[i])
+    plt.plot(threshold,recall,label=label, color=color)
 
     plt.subplot(1,3,3)
-    plt.plot(recall,precision,label=d.split('.')[0], color=colors[i])
-
-# plt.legend(loc='lower left')
-# plt.title(sys.argv[2])
-# plt.xlabel('recall')
-# plt.ylabel('precision')
-# #plt.xlim((0.0,0.001))
-# #plt.xlabel('threshold')
-# #plt.ylabel('recall')
-# plt.savefig(sys.argv[2] + '.png')
-# # plt.show()
+    plt.plot(recall,precision,label=label, color=color)
 
 plt.subplot(1,3,1)
 plt.xlabel('threshold')

@@ -15,6 +15,6 @@ bash pr_curve/pr_curve.sh $OUT_FILE $PRED_FILE $GT_FILE
 # mkdir -p roc_results/
 mv $OUT_FILE* roc_results/
 
-rm -f $OUT_IMAGE.png
+# rm -f $OUT_IMAGE.png
 python pr_curve/plot.py roc_results $OUT_IMAGE
 echo 'pr curve image: '$OUT_IMAGE.png
