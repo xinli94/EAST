@@ -12,9 +12,10 @@ tf.app.flags.DEFINE_string('test_data_path', '/tmp/ch4_test_images/images/', '')
 tf.app.flags.DEFINE_string('gpu_list', '0', '')
 tf.app.flags.DEFINE_string('checkpoint_path', '/tmp/east_icdar2015_resnet_v1_50_rbox/', '')
 tf.app.flags.DEFINE_string('output_dir', '/tmp/ch4_test_images/images/', '')
-tf.app.flags.DEFINE_bool('no_write_images', False, 'do not write images')
+tf.app.flags.DEFINE_integer('write_images_count', 500, 'number of images to visualize')
 tf.app.flags.DEFINE_float('score_threshold', 0.8, 'score threshold to use')
 tf.app.flags.DEFINE_float('vis_score_threshold', 0.8, 'score threshold to use')
+tf.app.flags.DEFINE_string('backbone', 'resnet_v1_50', 'backbone model to use')
 
 import model
 from icdar import restore_rectangle
@@ -144,10 +145,12 @@ def main(argv=None):
         input_images = tf.placeholder(tf.float32, shape=[None, None, None, 3], name='input_images')
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
 
-        f_score, f_geometry = model.model(input_images, is_training=False)
+        f_score, f_geometry = model.model(input_images, is_training=False, backbone=FLAGS.backbone)
 
         variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
         saver = tf.train.Saver(variable_averages.variables_to_restore())
+
+        image_count = 0
 
         with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
             ckpt_state = tf.train.get_checkpoint_state(FLAGS.checkpoint_path)
@@ -174,16 +177,15 @@ def main(argv=None):
                     score_map_thresh=FLAGS.score_threshold
                 )
 
-                print('[{}/{} ({:.2f}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms'.format(
-                    idx+1, total, 100.0 * (idx+1) / total, im_fn, timer['net']*1000, timer['restore']*1000, timer['nms']*1000))
-
                 if boxes is not None:
                     boxes = boxes[:, :8].reshape((-1, 4, 2))
                     boxes[:, :, 0] /= ratio_w
                     boxes[:, :, 1] /= ratio_h
 
                 duration = time.time() - start_time
-                print('[timing] {}'.format(duration))
+
+                print('[{}/{} ({:.2f}%)] {} : net {:.0f}ms, restore {:.0f}ms, nms {:.0f}ms, [timing] {:.2f}s'.format(
+                    idx+1, total, 100.0 * (idx+1) / total, im_fn, timer['net']*1000, timer['restore']*1000, timer['nms']*1000, duration))
 
                 # save to file
                 if boxes is not None:
@@ -203,7 +205,9 @@ def main(argv=None):
                             ))
                             if cur_score > FLAGS.vis_score_threshold:
                                 cv2.polylines(im[:, :, ::-1], [box.astype(np.int32).reshape((-1, 1, 2))], True, color=(255, 0, 0), thickness=2)
-                if not FLAGS.no_write_images:
+
+                if image_count < FLAGS.write_images_count:
+                    image_count += 1
                     img_path = os.path.join(FLAGS.output_dir, os.path.basename(im_fn))
                     cv2.imwrite(img_path, im[:, :, ::-1])
 

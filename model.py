@@ -30,14 +30,19 @@ def mean_image_subtraction(images, means=[123.68, 116.78, 103.94]):
     return tf.concat(axis=3, values=channels)
 
 
-def model(images, weight_decay=1e-5, is_training=True):
+def model(images, weight_decay=1e-5, is_training=True, backbone='resnet_v1_50'):
     '''
     define the model, we use slim's implemention of resnet
     '''
     images = mean_image_subtraction(images)
 
     with slim.arg_scope(resnet_v1.resnet_arg_scope(weight_decay=weight_decay)):
-        logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
+        if backbone == 'resnet_v1_50':
+            logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
+        elif backbone == 'resnet_v1_101':
+            logits, end_points = resnet_v1.resnet_v1_101(images, is_training=is_training, scope='resnet_v1_101')
+        else:
+            raise Exception('Backbone {} is not supported'.format(backbone))
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
         batch_norm_params = {
@@ -51,6 +56,13 @@ def model(images, weight_decay=1e-5, is_training=True):
                             normalizer_fn=slim.batch_norm,
                             normalizer_params=batch_norm_params,
                             weights_regularizer=slim.l2_regularizer(weight_decay)):
+            try:
+                end_points['pool3'] = end_points['{}/block1'.format(backbone)]
+                end_points['pool4'] = end_points['{}/block2'.format(backbone)]
+            except:
+                end_points['pool3'] = end_points['Detection/{}/block1'.format(backbone)]
+                end_points['pool4'] = end_points['Detection/{}/block2'.format(backbone)]
+
             f = [end_points['pool5'], end_points['pool4'],
                  end_points['pool3'], end_points['pool2']]
             for i in range(4):

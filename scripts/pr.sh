@@ -11,8 +11,8 @@ DEFAULT='pr'
 OUT_IMAGE=${4:-$DEFAULT}
 
 bash pr_curve/pr_curve.sh $OUT_FILE $PRED_FILE $GT_FILE
-rm -f roc_results/*
-mkdir -p roc_results/
+# rm -f roc_results/*
+# mkdir -p roc_results/
 mv $OUT_FILE* roc_results/
 
 rm -f $OUT_IMAGE.png
