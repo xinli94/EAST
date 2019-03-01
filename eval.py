@@ -3,6 +3,7 @@ import time
 import math
 import os
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 import locality_aware_nms as nms_locality
@@ -28,14 +29,14 @@ def get_images():
     find image files in test data path
     :return: list of files found
     '''
-    files = []
-    exts = ['jpg', 'png', 'jpeg', 'JPG']
-    for parent, dirnames, filenames in os.walk(FLAGS.test_data_path):
-        for filename in filenames:
-            for ext in exts:
-                if filename.endswith(ext):
-                    files.append(os.path.join(parent, filename))
-                    break
+    if os.path.splitext(FLAGS.test_data_path)[-1] == '.csv':
+        # support csv format input
+        files = pd.read_csv(FLAGS.test_data_path, names=['image'])['image'].tolist()
+    else:
+        files = []
+        for ext in ['jpg', 'png', 'jpeg', 'JPG']:
+            files.extend(glob.glob(
+                os.path.join(FLAGS.test_data_path, '*.{}'.format(ext))))
     print('Find {} images'.format(len(files)))
     return files
 
