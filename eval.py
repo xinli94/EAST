@@ -1,9 +1,10 @@
 import cv2
 import time
 import math
-import os
 import numpy as np
+import os
 import pandas as pd
+from PIL import Image, ImageDraw
 import tensorflow as tf
 
 import locality_aware_nms as nms_locality
@@ -23,18 +24,25 @@ import model
 from icdar import restore_rectangle
 
 FLAGS = tf.app.flags.FLAGS
+LIST_EXT = ['csv', 'txt']
+IMAGES_EXT = ['jpg', 'png', 'jpeg', 'JPG']
 
 def get_images():
     '''
     find image files in test data path
     :return: list of files found
     '''
-    if os.path.splitext(FLAGS.test_data_path)[-1] == '.csv':
-        # support csv format input
+    test_data_ext = os.path.splitext(FLAGS.test_data_path)[-1].replace('.', '')
+    if test_data_ext in LIST_EXT:
+        # csv format input
         files = pd.read_csv(FLAGS.test_data_path, names=['image'])['image'].tolist()
+    elif test_data_ext in IMAGES_EXT:
+        # image format input
+        files = [FLAGS.test_data_path]
     else:
+        # folder format input
         files = []
-        for ext in ['jpg', 'png', 'jpeg', 'JPG']:
+        for ext in IMAGES_EXT:
             files.extend(glob.glob(
                 os.path.join(FLAGS.test_data_path, '*.{}'.format(ext))))
     print('Find {} images'.format(len(files)))
@@ -132,6 +140,38 @@ def sort_poly(p):
         return p[[0, 3, 2, 1]]
 
 
+def vis_score(score_map, im_fn, im_resized, ratio_h, ratio_w, score_map_thresh=0.8, pixel_size=4.0):
+    if len(score_map.shape) == 4:
+        score_map = score_map[0, :, :, 0]
+
+    # cond = np.greater_equal(score_map, score_map_thresh)
+    # activation_pixels = np.where(cond)
+    activation_pixels = np.where(score_map > score_map_thresh)
+
+    im = Image.fromarray(im_resized)
+    # print(">>>>>>>>>>>>>>>>>> ", ratio_w, ratio_h)
+    # width, height = im.size
+    # im = im.resize((int(width / ratio_w), int(height / ratio_h)), Image.NEAREST).convert('RGB')
+    draw = ImageDraw.Draw(im)
+    # psx, psy = 0.5 / ratio_h, 0.5 / ratio_w
+    psx = psy = 0.5
+    for i, j in zip(activation_pixels[0], activation_pixels[1]):
+        # px = (j + 0.5) * pixel_size / ratio_h
+        # py = (i + 0.5) * pixel_size / ratio_w
+        px = (j + psx) * pixel_size
+        py = (i + psy) * pixel_size
+        line_width, line_color = 1, 'red'
+        draw.line([(px - psx * pixel_size, py - psy * pixel_size),
+                   (px + psx * pixel_size, py - psy * pixel_size),
+                   (px + psx * pixel_size, py + psy * pixel_size),
+                   (px - psx * pixel_size, py + psy * pixel_size),
+                   (px - psx * pixel_size, py - psy * pixel_size)],
+                  width=line_width, fill=line_color)
+    # cv2.imwrite('tmp.png', im_resized[:, :, ::-1])
+    image_path = os.path.join(FLAGS.output_dir, os.path.splitext(os.path.basename(im_fn))[0] + '_act.jpg')
+    im.save(image_path)
+
+
 def main(argv=None):
     import os
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
@@ -154,8 +194,11 @@ def main(argv=None):
         image_count = 0
 
         with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
-            ckpt_state = tf.train.get_checkpoint_state(FLAGS.checkpoint_path)
-            model_path = os.path.join(FLAGS.checkpoint_path, os.path.basename(ckpt_state.model_checkpoint_path))
+            try:
+                ckpt_state = tf.train.get_checkpoint_state(FLAGS.checkpoint_path)
+                model_path = os.path.join(FLAGS.checkpoint_path, os.path.basename(ckpt_state.model_checkpoint_path))
+            except:
+                model_path = FLAGS.checkpoint_path
             print('Restore from {}'.format(model_path))
             saver.restore(sess, model_path)
 
@@ -169,6 +212,7 @@ def main(argv=None):
                 timer = {'net': 0, 'restore': 0, 'nms': 0}
                 start = time.time()
                 score, geometry = sess.run([f_score, f_geometry], feed_dict={input_images: [im_resized]})
+
                 timer['net'] = time.time() - start
 
                 boxes, timer, scores_filtered = detect(
@@ -211,10 +255,10 @@ def main(argv=None):
                     image_count += 1
                     img_path = os.path.join(FLAGS.output_dir, os.path.basename(im_fn))
                     cv2.imwrite(img_path, im[:, :, ::-1])
-                else:
-                    if FLAGS.vis_only:
-                        print('==> Visualization only')
-                        return
+                    vis_score(score, im_fn, im_resized, ratio_h, ratio_w, score_map_thresh=FLAGS.score_threshold)
+                elif FLAGS.vis_only:
+                    print('==> Visualization only')
+                    return
 
 if __name__ == '__main__':
     tf.app.run()

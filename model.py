@@ -42,7 +42,7 @@ def model(images, weight_decay=1e-5, is_training=True, backbone='resnet_v1_50'):
         elif backbone == 'resnet_v1_101':
             logits, end_points = resnet_v1.resnet_v1_101(images, is_training=is_training, scope='resnet_v1_101')
         else:
-            raise Exception('Backbone {} is not supported'.format(backbone))
+            raise Exception('Only support resnet_v1_50 and resnet_v1_101. Backbone {} is not supported'.format(backbone))
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
         batch_norm_params = {
