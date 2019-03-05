@@ -15,6 +15,7 @@ tf.app.flags.DEFINE_boolean('restore', False, 'whether to resotre from checkpoin
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 1000, '')
 tf.app.flags.DEFINE_integer('save_summary_steps', 100, '')
 tf.app.flags.DEFINE_string('pretrained_model_path', None, '')
+tf.app.flags.DEFINE_string('backbone', 'resnet_v1_50', 'backbone model to use')
 
 import model
 import icdar
@@ -27,7 +28,8 @@ gpus = list(range(len(FLAGS.gpu_list.split(','))))
 def tower_loss(images, score_maps, geo_maps, training_masks, reuse_variables=None):
     # Build inference graph
     with tf.variable_scope(tf.get_variable_scope(), reuse=reuse_variables):
-        f_score, f_geometry = model.model(images, is_training=True)
+        # f_score, f_geometry = model.model(images, is_training=True)
+        f_score, f_geometry = model.model(images, is_training=True, backbone=FLAGS.backbone)
 
     model_loss = model.loss(score_maps, f_score,
                             geo_maps, f_geometry,
@@ -84,13 +86,23 @@ def main(argv=None):
         input_geo_maps = tf.placeholder(tf.float32, shape=[None, None, None, 8], name='input_geo_maps')
     input_training_masks = tf.placeholder(tf.float32, shape=[None, None, None, 1], name='input_training_masks')
 
-    global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    if FLAGS.restore:
+        try:
+            ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+        except:
+            ckpt = FLAGS.checkpoint_path
+        start_step = int(os.path.basename(ckpt).split('-')[1])
+    else:
+        start_step = 0
+
+    # global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
+    global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(start_step), trainable=False)
+
     learning_rate = tf.train.exponential_decay(FLAGS.learning_rate, global_step, decay_steps=10000, decay_rate=0.94, staircase=True)
     # add summary
     tf.summary.scalar('learning_rate', learning_rate)
     opt = tf.train.AdamOptimizer(learning_rate)
     # opt = tf.train.MomentumOptimizer(learning_rate, 0.9)
-
 
     # split
     input_images_split = tf.split(input_images, len(gpus))
@@ -126,7 +138,7 @@ def main(argv=None):
     with tf.control_dependencies([variables_averages_op, apply_gradient_op, batch_norm_updates_op]):
         train_op = tf.no_op(name='train_op')
 
-    saver = tf.train.Saver(tf.global_variables(), max_to_keep=None)
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
     summary_writer = tf.summary.FileWriter(FLAGS.checkpoint_path, tf.get_default_graph())
 
     init = tf.global_variables_initializer()
@@ -136,12 +148,17 @@ def main(argv=None):
                                                              ignore_missing_vars=True)
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         if FLAGS.restore:
-            print('continue training from previous checkpoint')
-            try:
-                ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-                saver.restore(sess, ckpt)
-            except:
-                saver.restore(sess, FLAGS.checkpoint_path)
+            print('==> Continue training from previous checkpoint')
+            saver.restore(sess, ckpt)
+            print('Load the latest checkpoint from file {}'.format(ckpt))
+
+            # try:
+            #     ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+            #     saver.restore(sess, ckpt)
+            #     print('Load the latest checkpoint from file {}'.format(ckpt))
+            # except:
+            #     saver.restore(sess, FLAGS.checkpoint_path)
+            #     print('Load the latest checkpoint from file {}'.format(FLAGS.checkpoint_path))
         else:
             sess.run(init)
             if FLAGS.pretrained_model_path is not None:
@@ -152,7 +169,7 @@ def main(argv=None):
                                          batch_size=FLAGS.batch_size_per_gpu * len(gpus))
 
         start = time.time()
-        for step in range(FLAGS.max_steps):
+        for step in range(start_step, FLAGS.max_steps):
             data = next(data_generator)
             ml, tl, _ = sess.run([model_loss, total_loss, train_op], feed_dict={input_images: data[0],
                                                                                 input_score_maps: data[2],
