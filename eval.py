@@ -144,14 +144,9 @@ def vis_score(score_map, im_fn, im_resized, ratio_h, ratio_w, score_map_thresh=0
     if len(score_map.shape) == 4:
         score_map = score_map[0, :, :, 0]
 
-    # cond = np.greater_equal(score_map, score_map_thresh)
-    # activation_pixels = np.where(cond)
     activation_pixels = np.where(score_map > score_map_thresh)
 
     im = Image.fromarray(im_resized)
-    # print(">>>>>>>>>>>>>>>>>> ", ratio_w, ratio_h)
-    # width, height = im.size
-    # im = im.resize((int(width / ratio_w), int(height / ratio_h)), Image.NEAREST).convert('RGB')
     draw = ImageDraw.Draw(im)
     # psx, psy = 0.5 / ratio_h, 0.5 / ratio_w
     psx = psy = 0.5
@@ -167,7 +162,6 @@ def vis_score(score_map, im_fn, im_resized, ratio_h, ratio_w, score_map_thresh=0
                    (px - psx * pixel_size, py + psy * pixel_size),
                    (px - psx * pixel_size, py - psy * pixel_size)],
                   width=line_width, fill=line_color)
-    # cv2.imwrite('tmp.png', im_resized[:, :, ::-1])
     image_path = os.path.join(FLAGS.output_dir, os.path.splitext(os.path.basename(im_fn))[0] + '_act.jpg')
     im.save(image_path)
 
