@@ -1,4 +1,3 @@
-# coding:utf-8
 import argparse
 import glob
 import numpy as np
@@ -10,24 +9,29 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--type', type=str, choices=['csvn', 'icdar'], required=True, help='Target data type')
 # postprocess: to csvn
 parser.add_argument('--input_folder', type=str, help='Input folder of groudtruth_boxes / eval results (txt)')
-parser.add_argument('--groundtruth', action='store_true', default=False, help='Whether input is groundtruth')
+parser.add_argument('--detect_groundtruth', action='store_true', default=False, help='Whether input is detection groundtruth')
+parser.add_argument('--cls_groundtruth', action='store_true', default=False, help='Whether input is classification groundtruth')
 parser.add_argument('--output_file', type=str, help='Output result csv file')
 # preprocess: to icdar
 parser.add_argument('--boxes_folder', type=str, help='Input folder of boxes, eight point format')
 
-parser.set_defaults(
-    input_folder='/data5/xin/ocr/output',
-    ground_truth=False,
-    output_file='/data5/xin/ocr/data_csv/result.csv',
-    boxes_folder='/data5/xin/ocr/rot_boxes_v2_normal_with_class/boxes'
-)
+# parser.set_defaults(
+#     input_folder='/data5/xin/ocr/output',
+#     output_file='/data5/xin/ocr/data_csv/result.csv',
+#     boxes_folder='/data5/xin/ocr/rot_boxes_v2_normal_with_class/boxes'
+# )
 
 # parser.set_defaults(
 #     input_folder='/data5/xin/ocr/rot_boxes_v2_normal_with_class/boxes/',
-#     ground_truth=True,
-#     output_file='/data5/xin/ocr/data_csv/groundtruth.csv',
-#     boxes_folder='/data5/xin/ocr/rot_boxes_v2_normal_with_class/boxes/'
+#     detect_groundtruth=True,
+#     output_file='/data5/xin/ocr/data_csv/groundtruth.csv'
 # )
+
+parser.set_defaults(
+    input_folder='/data5/xin/ocr/rot_boxes_v2_normal_with_class/images/',
+    cls_groundtruth=True,
+    output_file='/data5/xin/ocr/data_csv/groundtruth_cls.csv'
+)
 
 args = parser.parse_args()
 
@@ -49,13 +53,20 @@ def robust_decode(text_file):
     error = []
     for decode in ['ascii', 'utf-8', 'latin-1']:
         try:
-            text = [item.strip().encode('utf-8') for item in open(text_file, 'r', encoding=decode).readlines()]
+            text = [item.strip().encode('utf-8') for item in open(text_file, 'r', encoding=decode).readlines() if item.strip()]
             return text
         except Exception as e:
             error.append(e)
             pass
     print(error)
     return None
+
+def robust_str(s):
+    # hack
+    if s.startswith("b'") or s.startswith('b"'):
+        return s[2:-1]
+    else:
+        return s
 
 def main():
     if args.type == 'csvn':
@@ -64,21 +75,22 @@ def main():
         for file in tqdm(files):
             image_name = os.path.splitext(os.path.basename(file))[0] + '.jpeg'
 
-            data = np.genfromtxt(file, delimiter=',')
+            # data = np.genfromtxt(file, delimiter=',', encoding='utf-8')
+            data = np.array(pd.read_csv(file, header=None))
             for idx, item in enumerate(data):
                 box = item[:8].reshape(4,2)
                 min_h, max_h = box[:,1].min(), box[:,1].max()
                 min_w, max_w = box[:,0].min(), box[:,0].max()
-                if args.ground_truth:
-                    box_file, text_file = file, file.replace('/boxes', '/text')
-                    if not valid(box_file, text_file):
-                        print('==> Ignore {}'.format(box_file))
-                        continue
+                assert len(item) == 9
 
+                # detection / classification: ground truth to csvn
+                if args.detect_groundtruth or args.cls_groundtruth:
                     # path, image_width, image_height, left, top, right, bottom, label
-                    records.append([image_name, -1, -1, min_w, min_h, max_w, max_h, 'text'])
+                    label = 'text' if args.detect_groundtruth else robust_str(item[8])
+                    records.append([image_name, -1, -1, min_w, min_h, max_w, max_h, label])
+
+                # detection: 8 points to csvn
                 else:
-                    assert len(item) == 9
                     score = item[-1]
                     # path, timestamp, image_width, image_height, left, top, right, bottom, score, label
                     records.append([image_name, -1, -1, -1, min_w, min_h, max_w, max_h, score, 'text'])

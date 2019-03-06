@@ -17,7 +17,7 @@ gt = {}
 with open(gt_file) as f:
     for line in f:
         line = line.rstrip()
-        path,width,height,left,top,right,bottom,label = line.split(',')
+        path,width,height,left,top,right,bottom,label = line.split(',')[:8]
 
         #if label != 'kingfisher_beer': continue
 
@@ -34,7 +34,7 @@ preds = {}
 with open(pred_file) as f:
     for line in f:
         line = line.rstrip()
-        path,timestamp,image_width,image_height,left,top,right,bottom,score,label = line.split(',')
+        path,timestamp,image_width,image_height,left,top,right,bottom,score,label = line.split(',')[:10]
         #path,timestamp,image_width,image_height,left,top,right,bottom,score,label,c_score = line.split(',')
         #path,image_width,image_height,left,top,right,bottom,label,score = line.split(',')
 
