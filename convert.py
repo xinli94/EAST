@@ -83,14 +83,15 @@ def main():
                 min_w, max_w = box[:,0].min(), box[:,0].max()
                 assert len(item) == 9
 
-                # detection / classification: ground truth to csvn
-                if args.detect_groundtruth or args.cls_groundtruth:
-                    # path, image_width, image_height, left, top, right, bottom, label
-                    label = 'text' if args.detect_groundtruth else robust_str(item[8])
-                    records.append([image_name, -1, -1, min_w, min_h, max_w, max_h, label])
+                # # detection / classification: ground truth to csvn
+                # if args.detect_groundtruth or args.cls_groundtruth:
+                #     # path, image_width, image_height, left, top, right, bottom, label
+                #     label = 'text' if args.detect_groundtruth else robust_str(item[8])
+                #     records.append([image_name, -1, -1, min_w, min_h, max_w, max_h, label])
 
-                # detection: 8 points to csvn
-                else:
+                # # detection: 8 points to csvn
+                # else:
+                if True:
                     score = item[-1]
                     # path, timestamp, image_width, image_height, left, top, right, bottom, score, label
                     records.append([image_name, -1, -1, -1, min_w, min_h, max_w, max_h, score, 'text'])
