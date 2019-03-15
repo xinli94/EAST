@@ -23,31 +23,11 @@ tf.app.flags.DEFINE_boolean('vis_only', False, 'only visualize demo images')
 
 import model
 from icdar import restore_rectangle
+from data_util import get_data
 
 FLAGS = tf.app.flags.FLAGS
 LIST_EXT = ['csv', 'txt']
 IMAGES_EXT = ['jpg', 'png', 'jpeg', 'JPG']
-
-def get_images():
-    '''
-    find image files in test data path
-    :return: list of files found
-    '''
-    test_data_ext = os.path.splitext(FLAGS.test_data_path)[-1].replace('.', '')
-    if test_data_ext in LIST_EXT:
-        # csv format input
-        files = pd.read_csv(FLAGS.test_data_path, names=['image'])['image'].tolist()
-    elif test_data_ext in IMAGES_EXT:
-        # image format input
-        files = [FLAGS.test_data_path]
-    else:
-        # folder format input
-        files = []
-        for ext in IMAGES_EXT:
-            files.extend(glob.glob(
-                os.path.join(FLAGS.test_data_path, '*.{}'.format(ext))))
-    print('Find {} images'.format(len(files)))
-    return files
 
 
 def resize_image(im, max_side_len=2400):
@@ -197,7 +177,7 @@ def main(argv=None):
             print('Restore from {}'.format(model_path))
             saver.restore(sess, model_path)
 
-            im_fn_list = get_images()
+            im_fn_list, _ = get_data(FLAGS.test_data_path)
             total = len(im_fn_list)
             for idx, im_fn in enumerate(im_fn_list):
                 im = cv2.imread(im_fn)[:, :, ::-1]

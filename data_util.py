@@ -2,6 +2,8 @@
 this file is modified from keras implemention of data process multi-threading,
 see https://github.com/fchollet/keras/blob/master/keras/utils/data_utils.py
 '''
+import csv
+import os
 import time
 import numpy as np
 import threading
@@ -127,3 +129,57 @@ class GeneratorEnqueuer():
                     yield inputs
             else:
                 time.sleep(self.wait_time)
+
+
+def _data_replace(image_path):
+    return image_path.replace(os.path.basename(image_path).split('.')[1], 'txt')
+
+
+def get_data(data_path):
+    LIST_EXT = ['csv', 'txt']
+    IMAGES_EXT = ['jpg', 'png', 'jpeg', 'JPG']
+
+    data_ext = os.path.splitext(data_path)[-1].replace('.', '')
+
+    if data_ext in LIST_EXT:
+        # support csv format input
+        with open(data_path, 'rt') as f:
+            data = np.array(list(csv.reader(f)))
+
+        if len(data[0]) == 1:
+            '''
+            image-0.jpg
+            image-1.jpg
+            '''
+            image_list = data
+            text_list = np.array(list(map(_data_replace, data)))
+        else:
+            '''
+            image-0.jpg, bbox-0.txt, ...
+            image-1.jpg, bbox-0.txt, ...
+            '''
+            image_list, text_list = data[:,0], data[:,1]
+
+    elif data_ext in IMAGES_EXT:
+        image_list, text_list = [data_path], [_data_replace(data_path)]
+
+    else:
+        ''' folder '''
+        image_list = []
+        for ext in ['jpg', 'png', 'jpeg', 'JPG']:
+            image_list.extend(glob.glob(
+                os.path.join(data_path, '*.{}'.format(ext))))
+        image_list = data
+        text_list = np.array(list(map(_data_replace, data)))
+
+    return image_list, text_list
+
+
+def backbone_converter(backbone):
+    if 'res' in backbone:
+        if '50' in backbone:
+            return 'resnet_v1_50'
+        elif '101' in backbone:
+            return 'resnet_v1_101'
+    raise Exception('Only support resnet_v1_50 and resnet_v1_101. Backbone {} is not supported'.format(backbone))
+

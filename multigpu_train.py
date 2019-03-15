@@ -149,16 +149,12 @@ def main(argv=None):
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         if FLAGS.restore:
             print('==> Continue training from previous checkpoint')
+            if os.path.isdir(FLAGS.checkpoint_path):
+                ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
+            else:
+                ckpt = FLAGS.checkpoint_path
             saver.restore(sess, ckpt)
             print('Load the latest checkpoint from file {}'.format(ckpt))
-
-            # try:
-            #     ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-            #     saver.restore(sess, ckpt)
-            #     print('Load the latest checkpoint from file {}'.format(ckpt))
-            # except:
-            #     saver.restore(sess, FLAGS.checkpoint_path)
-            #     print('Load the latest checkpoint from file {}'.format(FLAGS.checkpoint_path))
         else:
             sess.run(init)
             if FLAGS.pretrained_model_path is not None:

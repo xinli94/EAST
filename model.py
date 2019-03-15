@@ -6,6 +6,7 @@ from tensorflow.contrib import slim
 tf.app.flags.DEFINE_integer('text_scale', 512, '')
 
 from nets import resnet_v1
+from data_util import backbone_converter
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -34,6 +35,7 @@ def model(images, weight_decay=1e-5, is_training=True, backbone='resnet_v1_50'):
     '''
     define the model, we use slim's implemention of resnet
     '''
+    backbone = backbone_converter(backbone)
     images = mean_image_subtraction(images)
 
     with slim.arg_scope(resnet_v1.resnet_arg_scope(weight_decay=weight_decay)):
@@ -41,8 +43,6 @@ def model(images, weight_decay=1e-5, is_training=True, backbone='resnet_v1_50'):
             logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
         elif backbone == 'resnet_v1_101':
             logits, end_points = resnet_v1.resnet_v1_101(images, is_training=is_training, scope='resnet_v1_101')
-        else:
-            raise Exception('Only support resnet_v1_50 and resnet_v1_101. Backbone {} is not supported'.format(backbone))
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
         batch_norm_params = {
@@ -109,8 +109,6 @@ def dice_coefficient(y_true_cls, y_pred_cls,
     loss = 1. - (2 * intersection / union)
     tf.summary.scalar('classification_dice_loss', loss)
     return loss
-
-
 
 def loss(y_true_cls, y_pred_cls,
          y_true_geo, y_pred_geo,

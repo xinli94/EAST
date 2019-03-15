@@ -13,7 +13,7 @@ from shapely.geometry import Polygon
 
 import tensorflow as tf
 
-from data_util import GeneratorEnqueuer
+from data_util import GeneratorEnqueuer, get_data
 
 tf.app.flags.DEFINE_string('training_data_path', '/data/ocr/icdar2015/',
                            'training dataset to use')
@@ -32,19 +32,6 @@ tf.app.flags.DEFINE_string('geometry', 'RBOX',
 
 
 FLAGS = tf.app.flags.FLAGS
-
-
-def get_images():
-    if os.path.splitext(FLAGS.training_data_path)[-1] == '.csv':
-        # support csv format input
-        files = pd.read_csv(FLAGS.training_data_path, names=['image'])['image'].tolist()
-    else:
-        files = []
-        for ext in ['jpg', 'png', 'jpeg', 'JPG']:
-            files.extend(glob.glob(
-                os.path.join(FLAGS.training_data_path, '*.{}'.format(ext))))
-    return files
-
 
 def load_annoataion(p):
     '''
@@ -589,7 +576,8 @@ def generator(input_size=512, batch_size=32,
               background_ratio=3./8,
               random_scale=np.array([0.5, 1, 2.0, 3.0]),
               vis=False):
-    image_list = np.array(get_images())
+    image_list, text_list = get_data(FLAGS.training_data_path)
+
     print('{} training images in {}'.format(
         image_list.shape[0], FLAGS.training_data_path))
     index = np.arange(0, image_list.shape[0])
@@ -606,13 +594,13 @@ def generator(input_size=512, batch_size=32,
                 im = cv2.imread(im_fn)
                 # print im_fn
                 h, w, _ = im.shape
-                txt_fn = im_fn.replace(os.path.basename(im_fn).split('.')[1], 'txt')
+                # txt_fn = im_fn.replace(os.path.basename(im_fn).split('.')[1], 'txt')
+                txt_fn = text_list[i]
                 if not os.path.exists(txt_fn):
                     print('text file {} does not exists'.format(txt_fn))
                     continue
 
                 text_polys, text_tags = load_annoataion(txt_fn)
-
                 text_polys, text_tags = check_and_validate_polys(text_polys, text_tags, (h, w))
                 # if text_polys.shape[0] == 0:
                 #     continue
