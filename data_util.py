@@ -164,7 +164,7 @@ def get_data(data_path):
         image_list, text_list = [data_path], [_data_replace(data_path)]
 
     else:
-        ''' folder '''
+        # folder
         image_list = []
         for ext in ['jpg', 'png', 'jpeg', 'JPG']:
             image_list.extend(glob.glob(
