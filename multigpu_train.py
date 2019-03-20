@@ -19,6 +19,7 @@ tf.app.flags.DEFINE_string('backbone', 'resnet_v1_50', 'backbone model to use')
 
 import model
 import icdar
+from data_util import get_checkpoint
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -87,10 +88,7 @@ def main(argv=None):
     input_training_masks = tf.placeholder(tf.float32, shape=[None, None, None, 1], name='input_training_masks')
 
     if FLAGS.restore:
-        try:
-            ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-        except:
-            ckpt = FLAGS.checkpoint_path
+        ckpt = get_checkpoint(FLAGS.checkpoint_path)
         start_step = int(os.path.basename(ckpt).split('-')[1])
     else:
         start_step = 0
@@ -149,10 +147,6 @@ def main(argv=None):
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         if FLAGS.restore:
             print('==> Continue training from previous checkpoint')
-            if os.path.isdir(FLAGS.checkpoint_path):
-                ckpt = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
-            else:
-                ckpt = FLAGS.checkpoint_path
             saver.restore(sess, ckpt)
             print('Load the latest checkpoint from file {}'.format(ckpt))
         else:

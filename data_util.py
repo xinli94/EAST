@@ -188,3 +188,12 @@ def backbone_converter(backbone):
             return 'resnet_v1_101'
     raise Exception('Only support resnet_v1_50 and resnet_v1_101. Backbone {} is not supported'.format(backbone))
 
+
+def get_checkpoint(ckpt_path):
+    if os.path.isdir(ckpt_path):
+        ckpt = tf.train.latest_checkpoint(ckpt_path)
+    else:
+        ckpt = ckpt_path
+    print('==> Use checkpoint {}'.format(ckpt))
+    return ckpt
+
