@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 import pandas as pd
+from tqdm import tqdm
 
 def draw_rbox(im, rboxes, words, scores, output_path, print_score, print_label, color=(255, 0, 0)):
     img = im.copy()
@@ -50,7 +51,7 @@ def draw_rbox_from_csv(input_csv, output_folder):
             files[image_path]['rboxes'].append(rbox)
             files[image_path]['labels'].append(label)
 
-        for idx, (image_path, data) in enumerate(files.items()):
+        for image_path, data in tqdm(files.items()):
             records = []
             rboxes, labels = data['rboxes'], data['labels']
 
@@ -60,7 +61,7 @@ def draw_rbox_from_csv(input_csv, output_folder):
             draw_rbox(im, rboxes, labels, None, output_path, print_score=False, print_label=True)
 
 if __name__ == '__main__':
-    input_csv = './synthtext.csv'
+    input_csv = '../synthtext.csv'
     output_folder = './vis/'
 
     draw_rbox_from_csv(input_csv, output_folder)
