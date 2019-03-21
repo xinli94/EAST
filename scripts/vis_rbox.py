@@ -36,6 +36,7 @@ def draw_rbox(im, rboxes, words, scores, output_path, print_score, print_label, 
         cv2.imwrite(output_path, img)
     return img
 
+
 def draw_rbox_from_csv(input_csv, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -59,6 +60,7 @@ def draw_rbox_from_csv(input_csv, output_folder):
             output_path = os.path.join(output_folder, os.path.basename(image_path) + '.out.png')
 
             draw_rbox(im, rboxes, labels, None, output_path, print_score=False, print_label=True)
+
 
 if __name__ == '__main__':
     input_csv = '../synthtext.csv'
