@@ -6,14 +6,14 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-def draw_rbox(im, rboxes, words, scores, output_path, print_score, print_label, color=(255, 0, 0)):
+def draw_rbox(im, rboxes, words, scores, output_path, print_score, print_label, color=(255, 0, 0), line_thickness=1):
     img = im.copy()
 
     for idx, rbox in enumerate(rboxes):
         rbox = rbox.astype(np.int32).reshape((4, 2))
 
         # visualize rbox
-        cv2.polylines(img, [rbox], True, color=color, thickness=1)
+        cv2.polylines(img, [rbox], True, color=color, thickness=line_thickness)
 
         # text_x, text_y = rbox[0, 0], rbox[0, 1] + 5
 
