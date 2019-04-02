@@ -12,6 +12,7 @@ try:
     import queue
 except ImportError:
     import Queue as queue
+import tensorflow as tf
 
 
 class GeneratorEnqueuer():

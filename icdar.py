@@ -43,7 +43,7 @@ def load_annoataion(p):
     text_tags = []
     if not os.path.exists(p):
         return np.array(text_polys, dtype=np.float32)
-    with open(p, 'r') as f:
+    with open(p, 'r', encoding="utf-8") as f:
         reader = csv.reader(f)
         for line in reader:
             label = line[-1]
@@ -600,7 +600,11 @@ def generator(input_size=512, batch_size=32,
                     print('text file {} does not exists'.format(txt_fn))
                     continue
 
-                text_polys, text_tags = load_annoataion(txt_fn)
+                try:
+                    text_polys, text_tags = load_annoataion(txt_fn)
+                except Exception as e:
+                    print('Error: {}, Skip: {}'.format(e, txt_fn))
+
                 text_polys, text_tags = check_and_validate_polys(text_polys, text_tags, (h, w))
                 # if text_polys.shape[0] == 0:
                 #     continue

@@ -6,10 +6,13 @@ import numpy as np
 import os
 import pandas as pd
 from PIL import Image, ImageDraw
+import random
 import tensorflow as tf
 
 import locality_aware_nms as nms_locality
 import lanms
+
+random.seed(12345)
 
 tf.app.flags.DEFINE_string('test_data_path', '/tmp/ch4_test_images/images/', '')
 tf.app.flags.DEFINE_string('gpu_list', '0', '')
@@ -178,6 +181,7 @@ def main(argv=None):
             saver.restore(sess, model_path)
 
             im_fn_list, _ = get_data(FLAGS.test_data_path)
+            random.shuffle(im_fn_list)
             total = len(im_fn_list)
             for idx, im_fn in enumerate(im_fn_list):
                 im = cv2.imread(im_fn)[:, :, ::-1]

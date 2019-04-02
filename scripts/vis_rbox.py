@@ -63,7 +63,7 @@ def draw_rbox_from_csv(input_csv, output_folder):
 
 
 if __name__ == '__main__':
-    input_csv = '../synthtext.csv'
+    input_csv = '/data5/xin/MSRA-TD500/msra_td500.csv'
     output_folder = './vis/'
 
     draw_rbox_from_csv(input_csv, output_folder)
