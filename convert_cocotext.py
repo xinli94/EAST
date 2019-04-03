@@ -1,4 +1,5 @@
 import collections
+import cv2
 import json
 import numpy as np
 import os
@@ -6,11 +7,11 @@ import pandas as pd
 from tqdm import tqdm
 
 root_path = '/data5/thomas/data-pipeline/coco_raw/'
-txt_folder = '/data5/xin/cocoText/text/'
+txt_folder = '/data5/xin/cocoText/text_v2/'
 # image, x1, y1, x2, y2, x3, y3, x4, y4, label
-csv_path = '/data5/xin/cocoText/cocotext.csv'
+csv_path = '/data5/xin/cocoText/cocotext_v2.csv'
 # image_path, txt_path
-east_csv_path = '/data5/xin/cocoText/all.csv'
+east_csv_path = '/data5/xin/cocoText/all_v2.csv'
 
 if not os.path.exists(txt_folder):
     os.makedirs(txt_folder)
@@ -22,7 +23,8 @@ def _image_path(image_name):
             return image_path
     return None
 
-gt_path = os.path.join(root_path, 'coco-text/COCO_Text.json')
+# gt_path = os.path.join(root_path, 'coco-text/COCO_Text.json')
+gt_path = '/data5/xin/cocoText/cocotext.v2.json'
 with open(gt_path) as f:
     data = json.load(f)
 
@@ -41,7 +43,16 @@ for info in tqdm(anns.values()):
         # print('Skip {}: {}'.format(count, image_path))
         continue
 
-    polygon, label = info['polygon'], info['utf8_string']
+    label = info['utf8_string']
+    # coco text v1
+    if 'polygon' in info:
+        polygon = info['polygon']
+    # coco text v2
+    else:
+        rect = cv2.minAreaRect(np.array(info['mask']).reshape(-1, 2).astype(np.int32))
+        box = cv2.boxPoints(rect)
+        polygon = np.reshape(box, [-1, ]).tolist()
+
     records.append([image_path] + polygon + [label])
     files[image_path].append(list(polygon) + [label])
     sets[image_path] = which_set

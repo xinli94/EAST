@@ -41,7 +41,7 @@ def draw_rbox_from_csv(input_csv, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    with open(input_csv, 'r') as csvfile:
+    with open(input_csv, 'r', encoding='utf8') as csvfile:
         csv_reader = csv.reader(csvfile, delimiter=',')
 
         files = collections.defaultdict(lambda: collections.defaultdict(list))
@@ -63,7 +63,9 @@ def draw_rbox_from_csv(input_csv, output_folder):
 
 
 if __name__ == '__main__':
-    input_csv = '/data5/xin/MSRA-TD500/msra_td500.csv'
+    # input_csv = '/data5/xin/MSRA-TD500/msra_td500.csv'
+    # input_csv = '/data5/xin/cocoText/cocotext.csv'
+    input_csv = '/data5/xin/cocoText/cocotext_v2.csv'
     output_folder = './vis/'
 
     draw_rbox_from_csv(input_csv, output_folder)

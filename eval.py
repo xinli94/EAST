@@ -20,7 +20,6 @@ tf.app.flags.DEFINE_string('checkpoint_path', '/tmp/east_icdar2015_resnet_v1_50_
 tf.app.flags.DEFINE_string('output_dir', '/tmp/ch4_test_images/images/', '')
 tf.app.flags.DEFINE_integer('write_images_count', 500, 'number of images to visualize')
 tf.app.flags.DEFINE_float('score_threshold', 0.8, 'score threshold to use')
-tf.app.flags.DEFINE_float('vis_score_threshold', 0.8, 'score threshold to use')
 tf.app.flags.DEFINE_string('backbone', 'resnet_v1_50', 'backbone model to use')
 tf.app.flags.DEFINE_boolean('vis_only', False, 'only visualize demo images')
 
@@ -227,7 +226,7 @@ def main(argv=None):
                             f.write('{},{},{},{},{},{},{},{},{}\r\n'.format(
                                 box[0, 0], box[0, 1], box[1, 0], box[1, 1], box[2, 0], box[2, 1], box[3, 0], box[3, 1], cur_score
                             ))
-                            if cur_score > FLAGS.vis_score_threshold:
+                            if cur_score > FLAGS.score_threshold:
                                 cv2.polylines(im[:, :, ::-1], [box.astype(np.int32).reshape((-1, 1, 2))], True, color=(255, 0, 0), thickness=2)
 
                 if image_count < FLAGS.write_images_count:
