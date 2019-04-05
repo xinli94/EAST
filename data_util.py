@@ -8,12 +8,14 @@ import time
 import numpy as np
 import threading
 import multiprocessing
+import random
 try:
     import queue
 except ImportError:
     import Queue as queue
 import tensorflow as tf
 
+random.seed(12345)
 
 class GeneratorEnqueuer():
     """Builds a queue out of a data generator.
@@ -178,16 +180,23 @@ def get_data(in_data_path):
         image_lists += list(image_list)
         text_lists += list(text_list)
 
+    # shuffle it!
+    combined = list(zip(image_lists, text_lists))
+    random.shuffle(combined)
+    image_lists[:], text_lists[:] = zip(*combined)
+
     return np.array(image_lists), np.array(text_lists)
 
 
 def backbone_converter(backbone):
     if 'res' in backbone:
-        if '50' in backbone:
-            return 'resnet_v1_50'
-        elif '101' in backbone:
-            return 'resnet_v1_101'
-    raise Exception('Only support resnet_v1_50 and resnet_v1_101. Backbone {} is not supported'.format(backbone))
+        for layer_count in ['50', '101', '152']:
+            if layer_count in backbone:
+                backbone_net = 'resnet_v1_{}'.format(layer_count)
+                print('==> Using backbone {}'.format(backbone_net))
+                return backbone_net
+
+    raise Exception('Only support resnet_v1_50, resnet_v1_101 and resnet_v1_152. Backbone {} is not supported'.format(backbone))
 
 
 def get_checkpoint(ckpt_path):

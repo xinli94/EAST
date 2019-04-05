@@ -43,6 +43,8 @@ def model(images, weight_decay=1e-5, is_training=True, backbone='resnet_v1_50'):
             logits, end_points = resnet_v1.resnet_v1_50(images, is_training=is_training, scope='resnet_v1_50')
         elif backbone == 'resnet_v1_101':
             logits, end_points = resnet_v1.resnet_v1_101(images, is_training=is_training, scope='resnet_v1_101')
+        elif backbone == 'resnet_v1_152':
+            logits, end_points = resnet_v1.resnet_v1_152(images, is_training=is_training, scope='resnet_v1_152')
 
     with tf.variable_scope('feature_fusion', values=[end_points.values]):
         batch_norm_params = {

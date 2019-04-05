@@ -1,3 +1,4 @@
+import argparse
 import collections
 import csv
 import cv2
@@ -59,14 +60,20 @@ def draw_rbox_from_csv(input_csv, output_folder):
             im = cv2.imread(image_path)
             output_path = os.path.join(output_folder, os.path.basename(image_path) + '.out.png')
 
-            draw_rbox(im, rboxes, labels, None, output_path, print_score=False, print_label=True)
+            draw_rbox(im, rboxes, labels, None, output_path, print_score=False, print_label=True, line_thickness=2)
 
 
 if __name__ == '__main__':
     # input_csv = '/data5/xin/MSRA-TD500/msra_td500.csv'
     # input_csv = '/data5/xin/cocoText/cocotext.csv'
-    input_csv = '/data5/xin/cocoText/cocotext_v2.csv'
+    # input_csv = '/data5/xin/cocoText/cocotext_v2.csv'
+    input_csv = '/data5/xin/ocr/ms_ocr_output_samples/rbox.csv'
     output_folder = './vis/'
 
-    draw_rbox_from_csv(input_csv, output_folder)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_csv', type=str, default=input_csv)
+    parser.add_argument('--output_folder', type=str, default=output_folder)
 
+    args = parser.parse_args()
+
+    draw_rbox_from_csv(args.input_csv, args.output_folder)

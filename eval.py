@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 import random
 import tensorflow as tf
 
-import locality_aware_nms as nms_locality
+# import locality_aware_nms as nms_locality
 import lanms
 
 random.seed(12345)
