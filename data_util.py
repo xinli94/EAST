@@ -3,6 +3,7 @@ this file is modified from keras implemention of data process multi-threading,
 see https://github.com/fchollet/keras/blob/master/keras/utils/data_utils.py
 '''
 import csv
+import glob
 import os
 import time
 import numpy as np
@@ -175,7 +176,7 @@ def get_data(in_data_path):
             for ext in ['jpg', 'png', 'jpeg', 'JPG']:
                 image_list.extend(glob.glob(
                     os.path.join(data_path, '*.{}'.format(ext))))
-            text_list = list(map(_data_replace, data))
+            text_list = list(map(_data_replace, image_list))
 
         image_lists += list(image_list)
         text_lists += list(text_list)
@@ -183,7 +184,7 @@ def get_data(in_data_path):
     # shuffle it!
     combined = list(zip(image_lists, text_lists))
     random.shuffle(combined)
-    image_lists[:], text_lists[:] = zip(*combined)
+    image_lists[:], text_lists[:] = list(zip(*combined))
 
     return np.array(image_lists), np.array(text_lists)
 
