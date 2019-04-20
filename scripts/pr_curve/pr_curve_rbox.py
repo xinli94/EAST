@@ -1,6 +1,7 @@
+import collections
 import os,sys
 import numpy as np
-from iou2 import get_iou
+from iou2 import get_iou_rbox
 from operator import itemgetter
 import logging
 from tqdm import tqdm
@@ -14,44 +15,39 @@ gt_file = sys.argv[2] if len(sys.argv) >= 3 else '/data5/xin/irv2_atrous/test.tx
 
 logging.warning('==> pred_file: {}'.format(pred_file))
 
-gt = {}
+gt = collections.defaultdict(list)
 #read in gt
 with open(gt_file) as f:
     for line in f:
-        line = line.rstrip()
-        path,width,height,left,top,right,bottom,label = line.split(',')[:8]
+        # path, x1, y1, x2, y2, x3, y3, x4, y4,label
+        line = line.rstrip().split(',')
 
-        #if label != 'kingfisher_beer': continue
+        path, label = line[0], line[9]
+        rbox = list(map(float, line[1:9]))
 
-        left,top,right,bottom = float(left),float(top),float(right),float(bottom)
-
-        if path in gt:
-            gt[path].append([left,top,right,bottom,label])
-        else:
-            gt[path] = [[left,top,right,bottom,label]]
- 
+        gt[path].append(rbox + [label]) 
 
 #read in preds
-preds = {}
+preds = collections.defaultdict(list)
 with open(pred_file) as f:
     for line in f:
-        line = line.rstrip()
-        path,timestamp,image_width,image_height,left,top,right,bottom,_,_,score,label = line.split(',')[:12]
-        #path,timestamp,image_width,image_height,left,top,right,bottom,score,label,c_score = line.split(',')
-        #path,image_width,image_height,left,top,right,bottom,label,score = line.split(',')
+        line = line.rstrip().split(',')
+        path, label, score = line[0], line[-2], float(line[-1])
+        rbox = list(map(float, line[4:12]))
 
-        left,top,right,bottom = float(left),float(top),float(right),float(bottom)
-        score = float(score)   #TODO: Use c-score
-        width = np.abs(right - left)
-        height = np.abs(bottom - top)
+        # path, timestamp, width, height, x1, y1, x2, y2, x3, y3, x4, y4, d_score, label, c_score
+
+        # path,timestamp,image_width,image_height,left,top,right,bottom,score,label = line.split(',')[:10]
+        # #path,timestamp,image_width,image_height,left,top,right,bottom,score,label,c_score = line.split(',')
+        # #path,image_width,image_height,left,top,right,bottom,label,score = line.split(',')
+
+        # left,top,right,bottom = float(left),float(top),float(right),float(bottom)
+        # score = float(score)   #TODO: Use c-score
+        # width = np.abs(right - left)
+        # height = np.abs(bottom - top)
         
         if score >= THRESH:
-            if path in preds:
-                preds[path].append([left,top,right,bottom,score,label])
-            else:
-                preds[path] = [[left,top,right,bottom,score,label]]
- 
-
+            preds[path].append(rbox + [score,label])
 
 #first do recall
 found = 0
@@ -84,7 +80,7 @@ for path in tqdm(gt):
             #print(" current pred: ", p)
             #if the labels match
             if Lev.distance(p[-1], g[-1]) <= 1:
-                iou = get_iou(p,g)
+                iou = get_iou_rbox(p,g)
                 #print("iou", iou)
                 if iou >= IOU_THRESH:
                     #print("match")
@@ -106,7 +102,7 @@ for path in tqdm(preds):
     else:
         continue
 
-    current_preds = sorted(current_preds,key=itemgetter(4),reverse=True) #sort by score
+    current_preds = sorted(current_preds,key=itemgetter(8),reverse=True) #sort by score
 
     for p in current_preds:
         correct = False
@@ -114,7 +110,7 @@ for path in tqdm(preds):
         for g in current_gt:
 
             if Lev.distance(p[-1], g[-1]) <= 1:
-                iou = get_iou(p,g)
+                iou = get_iou_rbox(p,g)
 
                 #prediction p matches g ground truth
                 #and is therefore correct

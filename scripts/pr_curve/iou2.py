@@ -1,6 +1,9 @@
 #box_1 = {"x1":0,"x2":100,"y1":0,"y2":100}
 #box_2 = {"x1":50,"x2":200,"y1":50,"y2":200}
 
+from shapely.geometry import Polygon
+import numpy as np
+
 def get_iou(box1, box2):
     """
     Calculate the Intersection over Union (IoU) of two bounding boxes.
@@ -119,3 +122,12 @@ def get_iomin(box1,box2):
 
 #print get_iou(box_1,box_2)
 #print get_iomin(box_1,box_2)
+
+
+def get_iou_rbox(box1, box2):
+    poly1 = Polygon(np.array(box1[:8]).reshape((4,2)).tolist())
+    poly2 = Polygon(np.array(box2[:8]).reshape((4,2)).tolist())
+
+    return poly1.intersection(poly2).area / poly1.union(poly2).area
+
+

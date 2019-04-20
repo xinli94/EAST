@@ -597,7 +597,7 @@ def generator(input_size=512, batch_size=32,
                 # txt_fn = im_fn.replace(os.path.basename(im_fn).split('.')[1], 'txt')
                 txt_fn = text_list[i]
                 if not os.path.exists(txt_fn):
-                    print('text file {} does not exists'.format(txt_fn))
+                    print('text file {} does not exist'.format(txt_fn))
                     continue
 
                 try:

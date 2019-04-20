@@ -67,7 +67,8 @@ if __name__ == '__main__':
     # input_csv = '/data5/xin/MSRA-TD500/msra_td500.csv'
     # input_csv = '/data5/xin/cocoText/cocotext.csv'
     # input_csv = '/data5/xin/cocoText/cocotext_v2.csv'
-    input_csv = '/data5/xin/ocr/ms_ocr_output_samples/rbox.csv'
+    # input_csv = '/data5/xin/ocr/ms_ocr_output_samples/rbox.csv'
+    input_csv = '/data5/xin/ocr/ms_ocr_900k/rbox.csv'
     output_folder = './vis/'
 
     parser = argparse.ArgumentParser()

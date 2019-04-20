@@ -136,7 +136,7 @@ class GeneratorEnqueuer():
 
 
 def _data_replace(image_path):
-    return image_path.replace(os.path.basename(image_path).split('.')[1], 'txt')
+    return image_path.replace(os.path.basename(image_path).split('.')[1], 'txt').replace('images/', 'text/')
 
 
 def get_data(in_data_path):
@@ -158,8 +158,8 @@ def get_data(in_data_path):
                 image-0.jpg
                 image-1.jpg
                 '''
-                image_list = data
-                text_list = np.array(list(map(_data_replace, data)))
+                image_list = data[:,0]
+                text_list = list(map(_data_replace, image_list))
             else:
                 '''
                 image-0.jpg, bbox-0.txt, ...
@@ -185,6 +185,8 @@ def get_data(in_data_path):
     combined = list(zip(image_lists, text_lists))
     random.shuffle(combined)
     image_lists[:], text_lists[:] = list(zip(*combined))
+
+    print('==> Find {} images'.format(len(image_lists)))
 
     return np.array(image_lists), np.array(text_lists)
 
